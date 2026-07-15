@@ -1,0 +1,37 @@
+@font-face {
+  font-family: prstart;
+  src: url('../fonts/prstart.ttf');
+}
+body {
+  font-family: prstart;
+  font-size: 16px;
+  background-color: black;
+  margin-top: 30px;
+}
+#main {
+  margin: 0 auto;
+  width: 512px;
+  color: white;
+}
+#help {
+  border-top: 4px solid white;
+  margin-top: 10px;
+  padding-top: 7px;
+}
+#help img {
+  vertical-align: middle;
+}
+#help td {
+  padding-left: 1em;
+}
+
+/* ── Мобильная адаптация ── */
+@media (max-width: 768px) {
+  body { background: #000 !important; margin: 0; padding: 0; overflow: hidden; }
+  #main { display: flex; justify-content: center; align-items: center; height: 100vh; }
+  #help { display: none !important; }
+  canvas { touch-action: none; user-select: none; -webkit-user-select: none; }
+}
+
+/* Запрет выделения текста при тапах */
+* { -webkit-tap-highlight-color: transparent; }
