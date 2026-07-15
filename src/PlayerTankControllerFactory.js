@@ -5,11 +5,13 @@ function PlayerTankControllerFactory(eventManager) {
 
 PlayerTankControllerFactory.prototype.notify = function (event) {
   if (event.name == PlayerTankFactory.Event.PLAYER_TANK_CREATED) {
-    this.create(event.tank);
+    this.create(event.tank, event.controllerType);
   }
 };
 
-PlayerTankControllerFactory.prototype.create = function (tank) {
-  var controller = new TankController(this._eventManager, tank);
-  return controller;
+PlayerTankControllerFactory.prototype.create = function (tank, controllerType) {
+  if (controllerType === 'player2') {
+    return new Player2TankController(this._eventManager, tank);
+  }
+  return new TankController(this._eventManager, tank);
 };
