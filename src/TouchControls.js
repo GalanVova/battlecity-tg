@@ -1,88 +1,82 @@
-// ═══════════════════════════════════════════════════════════
-//  TouchControls — виртуальный джойстик для телефона
-//
-//  ВАЖНО для мультиплеера:
-//  - Каждый игрок на своём телефоне — у каждого свой джойстик
-//  - P1 (хост): тач → стрелки + SPACE → TankController
-//  - P2 (клиент): тач → стрелки + SPACE → шлём на сервер →
-//    сервер ремапит в WASD+E → P1-хост двигает P2-танк
-//
-//  Т.е. ОБА игрока используют одинаковые коды клавиш (стрелки),
-//  но P2 их не применяет локально — только отправляет на сервер.
-// ═══════════════════════════════════════════════════════════
-
+// TouchControls — сенсорное управление для смартфона и Telegram Mini App.
+// Направления и огонь работают одновременно; SELECT/START управляют меню.
 function TouchControls(canvas, eventManager, opts) {
   this._canvas = canvas;
   this._eventManager = eventManager;
   this._opts = opts || {};
-  // sendToServer: function(key, pressed) — колбэк для P2
   this._sendToServer = this._opts.sendToServer || null;
-  // applyLocally: bool — применять ли нажатия в локальный eventManager
-  // P1 = true (управляет своим танком)
-  // P2 = false (только отправляет на сервер, не двигает P1-танк)
   this._applyLocally = (this._opts.applyLocally !== false);
-
   this._overlay = null;
   this._pressed = {};
   this._touches = {};
 
   this._buttons = [
-    { id:'up',    key: 38, label: '▲' },
-    { id:'down',  key: 40, label: '▼' },
-    { id:'left',  key: 37, label: '◀' },
-    { id:'right', key: 39, label: '▶' },
-    { id:'fire',  key: 32, label: '🔥', isFireBtn: true },
+    { id: 'up',     key: Keyboard.Key.UP,     label: '▲' },
+    { id: 'down',   key: Keyboard.Key.DOWN,   label: '▼' },
+    { id: 'left',   key: Keyboard.Key.LEFT,   label: '◀' },
+    { id: 'right',  key: Keyboard.Key.RIGHT,  label: '▶' },
+    { id: 'fire',   key: Keyboard.Key.SPACE,  label: 'FIRE', isFireBtn: true },
+    { id: 'select', key: Keyboard.Key.SELECT, label: 'SELECT', isMetaBtn: true },
+    { id: 'start',  key: Keyboard.Key.START,  label: 'START', isMetaBtn: true }
   ];
 }
 
 TouchControls.prototype.show = function () {
-  if (this._overlay) this._overlay.remove();
+  if (this._overlay) this.destroy();
 
-  var W = window.innerWidth, H = window.innerHeight;
-  var btnSz = Math.min(Math.floor(Math.min(W, H) * 0.14), 60);
-  var gap   = Math.floor(btnSz * 0.22);
-  var pad   = Math.floor(btnSz * 0.4);
+  var W = window.innerWidth;
+  var H = window.innerHeight;
+  var btnSz = Math.min(64, Math.max(48, Math.floor(Math.min(W, H) * 0.13)));
+  var gap = Math.max(7, Math.floor(btnSz * 0.16));
+  var pad = Math.max(12, Math.floor(btnSz * 0.28));
+  var bottom = pad + 4;
 
-  // D-pad — левый нижний
   var dx = pad + btnSz + gap;
-  var dy = H - pad - btnSz - gap;
-  // Огонь — правый нижний
-  var fx = W - pad - btnSz;
-  var fy = H - pad - btnSz;
+  var dy = H - bottom - btnSz * 2 - gap;
+  var fireSz = Math.floor(btnSz * 1.18);
+  var fx = W - pad - fireSz;
+  var fy = H - bottom - fireSz - Math.floor(btnSz * 0.45);
+  var metaW = Math.max(58, Math.floor(btnSz * 1.18));
+  var metaH = Math.max(28, Math.floor(btnSz * 0.48));
+  var center = Math.floor(W / 2);
 
-  // Позиции кнопок
   var positions = {
-    up:    { x: dx,               y: dy - btnSz - gap },
-    down:  { x: dx,               y: dy + btnSz + gap },
-    left:  { x: dx - btnSz - gap, y: dy              },
-    right: { x: dx + btnSz + gap, y: dy              },
-    fire:  { x: fx,               y: fy              },
+    up:     { x: dx,                 y: dy - btnSz - gap, w: btnSz,  h: btnSz },
+    down:   { x: dx,                 y: dy + btnSz + gap, w: btnSz,  h: btnSz },
+    left:   { x: dx - btnSz - gap,   y: dy,               w: btnSz,  h: btnSz },
+    right:  { x: dx + btnSz + gap,   y: dy,               w: btnSz,  h: btnSz },
+    fire:   { x: fx,                 y: fy,               w: fireSz, h: fireSz },
+    select: { x: center-metaW-gap/2, y: H-bottom-metaH,   w: metaW,  h: metaH },
+    start:  { x: center+gap/2,       y: H-bottom-metaH,   w: metaW,  h: metaH }
   };
 
-  this._buttons.forEach(function(b) {
-    b.x = positions[b.id].x;
-    b.y = positions[b.id].y;
-    b.w = btnSz; b.h = btnSz;
+  this._buttons.forEach(function (b) {
+    var p = positions[b.id];
+    b.x = p.x; b.y = p.y; b.w = p.w; b.h = p.h;
   });
 
   var ov = document.createElement('canvas');
   ov.id = 'touch-overlay';
-  ov.width  = W;
+  ov.width = W;
   ov.height = H;
   ov.style.cssText = [
-    'position:fixed','left:0','top:0',
-    'width:100%','height:100%',
-    'z-index:100','pointer-events:all','touch-action:none',
+    'position:fixed', 'left:0', 'top:0', 'width:100%', 'height:100%',
+    'z-index:100', 'pointer-events:auto', 'touch-action:none',
+    '-webkit-user-select:none', 'user-select:none'
   ].join(';');
   document.body.appendChild(ov);
   this._overlay = ov;
   this._draw();
 
   var self = this;
-  ov.addEventListener('touchstart',  function(e){e.preventDefault();self._onTouch(e,true); }, {passive:false});
-  ov.addEventListener('touchend',    function(e){e.preventDefault();self._onTouch(e,false);}, {passive:false});
-  ov.addEventListener('touchcancel', function(e){e.preventDefault();self._onTouch(e,false);}, {passive:false});
-  ov.addEventListener('touchmove',   function(e){e.preventDefault();self._onMove(e);       }, {passive:false});
+  ov.addEventListener('touchstart', function (e) { e.preventDefault(); self._onTouch(e, true); }, { passive: false });
+  ov.addEventListener('touchend', function (e) { e.preventDefault(); self._onTouch(e, false); }, { passive: false });
+  ov.addEventListener('touchcancel', function (e) { e.preventDefault(); self._onTouch(e, false); }, { passive: false });
+  ov.addEventListener('touchmove', function (e) { e.preventDefault(); self._onMove(e); }, { passive: false });
+
+  // Полезно при тестировании в мобильном режиме браузера мышью.
+  ov.addEventListener('pointerdown', function (e) { if (e.pointerType === 'mouse') self._onPointer(e, true); });
+  ov.addEventListener('pointerup', function (e) { if (e.pointerType === 'mouse') self._onPointer(e, false); });
 };
 
 TouchControls.prototype._draw = function () {
@@ -90,134 +84,108 @@ TouchControls.prototype._draw = function () {
   var ctx = this._overlay.getContext('2d');
   ctx.clearRect(0, 0, this._overlay.width, this._overlay.height);
 
-  this._buttons.forEach(function(b) {
+  this._buttons.forEach(function (b) {
     var pressed = this._pressed[b.id];
-    ctx.globalAlpha = pressed ? 0.85 : 0.45;
-    ctx.fillStyle   = b.isFireBtn ? (pressed ? '#ff2020' : '#800000') : (pressed ? '#2060cc' : '#223');
-    ctx.strokeStyle = b.isFireBtn ? '#ff6060' : '#48f';
-    ctx.lineWidth   = 2;
+    ctx.globalAlpha = pressed ? 0.92 : 0.58;
+    if (b.isFireBtn) ctx.fillStyle = pressed ? '#ff3b30' : '#8b1515';
+    else if (b.isMetaBtn) ctx.fillStyle = pressed ? '#777' : '#333';
+    else ctx.fillStyle = pressed ? '#3976d9' : '#20283a';
+    ctx.strokeStyle = b.isFireBtn ? '#ff8a80' : (b.isMetaBtn ? '#aaa' : '#66a3ff');
+    ctx.lineWidth = 2;
 
-    var r = 10;
+    var r = Math.min(12, b.h / 4);
     ctx.beginPath();
     ctx.moveTo(b.x+r, b.y);
-    ctx.lineTo(b.x+b.w-r, b.y);     ctx.quadraticCurveTo(b.x+b.w, b.y,    b.x+b.w, b.y+r);
-    ctx.lineTo(b.x+b.w, b.y+b.h-r); ctx.quadraticCurveTo(b.x+b.w, b.y+b.h,b.x+b.w-r, b.y+b.h);
-    ctx.lineTo(b.x+r, b.y+b.h);     ctx.quadraticCurveTo(b.x, b.y+b.h,    b.x, b.y+b.h-r);
-    ctx.lineTo(b.x, b.y+r);         ctx.quadraticCurveTo(b.x, b.y,         b.x+r, b.y);
-    ctx.closePath();
-    ctx.fill(); ctx.stroke();
+    ctx.lineTo(b.x+b.w-r, b.y); ctx.quadraticCurveTo(b.x+b.w,b.y,b.x+b.w,b.y+r);
+    ctx.lineTo(b.x+b.w,b.y+b.h-r); ctx.quadraticCurveTo(b.x+b.w,b.y+b.h,b.x+b.w-r,b.y+b.h);
+    ctx.lineTo(b.x+r,b.y+b.h); ctx.quadraticCurveTo(b.x,b.y+b.h,b.x,b.y+b.h-r);
+    ctx.lineTo(b.x,b.y+r); ctx.quadraticCurveTo(b.x,b.y,b.x+r,b.y);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
 
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#fff';
-    ctx.font = Math.floor(b.w * 0.42) + 'px Arial';
+    ctx.font = (b.isMetaBtn ? Math.max(9, Math.floor(b.h*0.34)) : Math.max(13, Math.floor(b.h*0.30))) + 'px Arial';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2 + 1);
+    ctx.fillText(b.label, b.x+b.w/2, b.y+b.h/2+1);
   }, this);
 };
 
 TouchControls.prototype._hitBtn = function (cx, cy) {
-  for (var i = 0; i < this._buttons.length; i++) {
-    var b = this._buttons[i];
-    // Немного увеличиваем зону попадания для удобства
-    var pad = 4;
-    if (cx >= b.x-pad && cx <= b.x+b.w+pad && cy >= b.y-pad && cy <= b.y+b.h+pad) return b;
+  for (var i=0; i<this._buttons.length; i++) {
+    var b=this._buttons[i], hitPad=6;
+    if (cx>=b.x-hitPad && cx<=b.x+b.w+hitPad && cy>=b.y-hitPad && cy<=b.y+b.h+hitPad) return b;
   }
   return null;
 };
 
 TouchControls.prototype._fireKey = function (key, pressed) {
-  // Применяем локально (P1 управляет своим танком)
   if (this._applyLocally) {
     this._eventManager.fireEvent({
       name: pressed ? Keyboard.Event.KEY_PRESSED : Keyboard.Event.KEY_RELEASED,
-      key: key,
+      key: key
     });
   }
-  // Отправляем на сервер (P2 управляет своим танком через P1-хост)
-  if (this._sendToServer) {
-    this._sendToServer(key, pressed);
+  if (this._sendToServer) this._sendToServer(key, pressed);
+};
+
+TouchControls.prototype._pressButton = function (touchId, btn) {
+  if (!btn) return;
+  this._touches[touchId] = btn.id;
+  if (!this._pressed[btn.id]) {
+    this._pressed[btn.id] = true;
+    this._fireKey(btn.key, true);
+  }
+};
+
+TouchControls.prototype._releaseTouch = function (touchId) {
+  var btnId = this._touches[touchId];
+  if (!btnId) return;
+  delete this._touches[touchId];
+  var stillHeld = Object.values(this._touches).indexOf(btnId) !== -1;
+  if (!stillHeld) {
+    delete this._pressed[btnId];
+    for (var i=0; i<this._buttons.length; i++) {
+      if (this._buttons[i].id === btnId) { this._fireKey(this._buttons[i].key, false); break; }
+    }
   }
 };
 
 TouchControls.prototype._onTouch = function (e, isStart) {
-  var rect = this._overlay.getBoundingClientRect();
-  var sx = this._overlay.width  / rect.width;
-  var sy = this._overlay.height / rect.height;
-  var touches = e.changedTouches;
-
-  for (var i = 0; i < touches.length; i++) {
-    var t = touches[i];
-    var cx = (t.clientX - rect.left) * sx;
-    var cy = (t.clientY - rect.top)  * sy;
-
-    if (isStart) {
-      var btn = this._hitBtn(cx, cy);
-      if (btn && !this._touches[t.identifier]) {
-        this._touches[t.identifier] = btn.id;
-        if (!this._pressed[btn.id]) {
-          this._pressed[btn.id] = true;
-          this._fireKey(btn.key, true);
-        }
-      }
-    } else {
-      var btnId = this._touches[t.identifier];
-      if (btnId) {
-        delete this._touches[t.identifier];
-        var stillHeld = Object.values(this._touches).indexOf(btnId) !== -1;
-        if (!stillHeld) {
-          delete this._pressed[btnId];
-          for (var j = 0; j < this._buttons.length; j++) {
-            if (this._buttons[j].id === btnId) {
-              this._fireKey(this._buttons[j].key, false);
-              break;
-            }
-          }
-        }
-      }
-    }
+  var rect=this._overlay.getBoundingClientRect();
+  var sx=this._overlay.width/rect.width, sy=this._overlay.height/rect.height;
+  var touches=e.changedTouches;
+  for (var i=0; i<touches.length; i++) {
+    var t=touches[i];
+    if (isStart) this._pressButton(t.identifier, this._hitBtn((t.clientX-rect.left)*sx,(t.clientY-rect.top)*sy));
+    else this._releaseTouch(t.identifier);
   }
   this._draw();
 };
 
 TouchControls.prototype._onMove = function (e) {
-  var rect = this._overlay.getBoundingClientRect();
-  var sx = this._overlay.width  / rect.width;
-  var sy = this._overlay.height / rect.height;
-  var touches = e.changedTouches;
-
-  for (var i = 0; i < touches.length; i++) {
-    var t = touches[i];
-    var oldId = this._touches[t.identifier];
-    var cx = (t.clientX - rect.left) * sx;
-    var cy = (t.clientY - rect.top)  * sy;
-    var newBtn = this._hitBtn(cx, cy);
-    var newId = newBtn ? newBtn.id : null;
-
+  var rect=this._overlay.getBoundingClientRect();
+  var sx=this._overlay.width/rect.width, sy=this._overlay.height/rect.height;
+  var touches=e.changedTouches;
+  for (var i=0; i<touches.length; i++) {
+    var t=touches[i], oldId=this._touches[t.identifier];
+    var newBtn=this._hitBtn((t.clientX-rect.left)*sx,(t.clientY-rect.top)*sy);
+    var newId=newBtn ? newBtn.id : null;
     if (oldId !== newId) {
-      // Отпускаем старую
-      if (oldId) {
-        delete this._touches[t.identifier];
-        var stillOld = Object.values(this._touches).indexOf(oldId) !== -1;
-        if (!stillOld) {
-          delete this._pressed[oldId];
-          for (var j = 0; j < this._buttons.length; j++) {
-            if (this._buttons[j].id === oldId) { this._fireKey(this._buttons[j].key, false); break; }
-          }
-        }
-      }
-      // Нажимаем новую
-      if (newBtn) {
-        this._touches[t.identifier] = newId;
-        if (!this._pressed[newId]) {
-          this._pressed[newId] = true;
-          this._fireKey(newBtn.key, true);
-        }
-      }
+      this._releaseTouch(t.identifier);
+      this._pressButton(t.identifier,newBtn);
     }
   }
   this._draw();
 };
 
+TouchControls.prototype._onPointer = function (e, isStart) {
+  var rect=this._overlay.getBoundingClientRect();
+  var btn=this._hitBtn(e.clientX-rect.left,e.clientY-rect.top);
+  if (isStart) this._pressButton('mouse',btn); else this._releaseTouch('mouse');
+  this._draw();
+};
+
 TouchControls.prototype.destroy = function () {
-  if (this._overlay) { this._overlay.remove(); this._overlay = null; }
+  Object.keys(this._touches).forEach(this._releaseTouch.bind(this));
+  if (this._overlay) { this._overlay.remove(); this._overlay=null; }
 };
