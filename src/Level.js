@@ -14,19 +14,19 @@ function Level(sceneManager, stageNumber, player) {
   
   new PlayerTankControllerFactory(this._eventManager);
   
-  // Player 1 (стрелки + пробел) — позиция P1 оригинала
+  // Player 1 (стрелки + пробел)
   this._playerTankFactory = new PlayerTankFactory(this._eventManager);
+  this._playerTankFactory.setControllerType('player1');
   this._playerTankFactory.setAppearPosition(new Point(this._x + 4 * Globals.UNIT_SIZE, this._y + 12 * Globals.UNIT_SIZE));
   this._playerTankFactory.create();
 
   // Player 2 (WASD + E) — только если выбран режим 2 игроков
   if (TankPowerSelectScene.twoPlayers) {
-    var self2 = self;
     this._player2TankFactory = new PlayerTankFactory(this._eventManager);
+    this._player2TankFactory.setControllerType('player2');
     this._player2TankFactory.setUpgradeLevel(TankPowerSelectScene.chosenUpgradeLevel2 || 0);
     this._player2TankFactory.setAppearPosition(new Point(this._x + 8 * Globals.UNIT_SIZE, this._y + 12 * Globals.UNIT_SIZE));
-    var p2tank = this._player2TankFactory.create();
-    new Player2TankController(this._eventManager, p2tank);
+    this._player2TankFactory.create();
   }
 
   new BulletFactory(this._eventManager);
@@ -76,14 +76,12 @@ function Level(sceneManager, stageNumber, player) {
   
   this._livesView = new LivesView(this._player);
   
-  // Второй игрок
   this._player2 = null;
   this._player2LivesView = null;
   if (TankPowerSelectScene.twoPlayers) {
     this._player2 = new Player();
     this._player2.setEventManager(this._eventManager);
     this._player2LivesView = new LivesView2(this._player2);
-    // P2 слушает OUT_OF_LIVES отдельно — не триггерит GameOver пока P1 жив
     this._player2.setIsPlayer2(true);
   }
   
@@ -139,7 +137,6 @@ Level.prototype.notify = function (event) {
     this._pause.setActive(false);
   }
   else if (event.name == Player.Event.OUT_OF_LIVES) {
-    // Если есть P2 и он ещё жив — не game over
     if (this._player2 && this._player2.getLives() >= 0 && !this._player2.isOutOfLives()) {
       this._playerTankFactory.setActive(false);
       return;
@@ -181,17 +178,14 @@ Level.prototype._createPowerUpFactory = function () {
     new Point(powerUpCol2X, powerUpRow1Y),
     new Point(powerUpCol3X, powerUpRow1Y),
     new Point(powerUpCol4X, powerUpRow1Y),
-    
     new Point(powerUpCol1X, powerUpRow2Y),
     new Point(powerUpCol2X, powerUpRow2Y),
     new Point(powerUpCol3X, powerUpRow2Y),
     new Point(powerUpCol4X, powerUpRow2Y),
-    
     new Point(powerUpCol1X, powerUpRow3Y),
     new Point(powerUpCol2X, powerUpRow3Y),
     new Point(powerUpCol3X, powerUpRow3Y),
     new Point(powerUpCol4X, powerUpRow3Y),
-    
     new Point(powerUpCol1X, powerUpRow4Y),
     new Point(powerUpCol2X, powerUpRow4Y),
     new Point(powerUpCol3X, powerUpRow4Y),
