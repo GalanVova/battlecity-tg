@@ -130,6 +130,8 @@
         tg.disableVerticalSwipes && tg.disableVerticalSwipes();
       }
 
+      var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || (tg != null);
+
       // ── Canvas ───────────────────────────────────────────
       var ctx = createCanvasContext();
       ctx.font = "16px prstart";
@@ -151,7 +153,6 @@
       // ── WebSocket подключение ────────────────────────────
       var ws = null;
       var touchControls = null;
-      var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || (tg != null);
 
       // Подключаемся к серверу в фоне — но НЕ меняем сцену
       // Меню остаётся оригинальным: 1 PLAYER / 2 PLAYERS / MULTIPLAYER / CONSTRUCTION
@@ -196,6 +197,13 @@
 
       // Запускаем игру — показываем обычное меню
       sceneManager.toLoadingScene();
+
+      // Сенсорное управление для смартфона и Telegram Mini App
+      if (isMobile) {
+        touchControls = new TouchControls(document.getElementById(CANVAS_ID), eventManager);
+        touchControls.show();
+      }
+
       // Подключаемся к серверу в фоне (чтобы мультиплеер открылся быстрее)
       connectToServer(function(ws) {
         // Просто сохраняем соединение, меню не меняем
@@ -216,8 +224,10 @@
         var h = Math.min(window.innerHeight, Globals.CANVAS_HEIGHT * 2);
         // На телефоне масштабируем под экран
         if (isMobile) {
+          var controlsHeight = Math.min(210, Math.max(155, Math.floor(window.innerHeight * 0.28)));
+          var availableHeight = Math.max(260, window.innerHeight - controlsHeight);
           var scale = Math.min(window.innerWidth / Globals.CANVAS_WIDTH,
-                               window.innerHeight / Globals.CANVAS_HEIGHT);
+                               availableHeight / Globals.CANVAS_HEIGHT);
           w = Math.floor(Globals.CANVAS_WIDTH  * scale);
           h = Math.floor(Globals.CANVAS_HEIGHT * scale);
         } else {
@@ -235,7 +245,8 @@
       // Убираем правую панель на мобильных
       if (isMobile || tg) {
         $('#help').hide();
-        $('body').css({ background: '#000', margin: 0 });
+        $('html, body').css({ background: '#000', margin: 0, width: '100%', height: '100%', overflow: 'hidden', 'touch-action': 'none' });
+        $('#main').css({ width: '100%', height: '100%', overflow: 'hidden' });
       }
     });
   </script>
