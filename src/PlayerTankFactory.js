@@ -3,6 +3,7 @@ function PlayerTankFactory(eventManager) {
   this._eventManager.addSubscriber(this, [TankExplosion.Event.DESTROYED]);
   this._appearPosition = new Point(0, 0);
   this._active = true;
+  this._controllerType = 'player1';
 }
 
 PlayerTankFactory.Event = {};
@@ -25,18 +26,25 @@ PlayerTankFactory.prototype.setUpgradeLevel = function (level) {
   this._upgradeLevel = level;
 };
 
+PlayerTankFactory.prototype.setControllerType = function (controllerType) {
+  this._controllerType = controllerType || 'player1';
+};
+
 PlayerTankFactory.prototype.create = function () {
   var tank = new Tank(this._eventManager);
   tank.setPosition(this._appearPosition);
   tank.setState(new TankStateAppearing(tank));
-  // Если задан явный уровень (P2) — используем его, иначе берём из глобального выбора (P1)
   var upgradeLevel = (this._upgradeLevel !== undefined)
     ? this._upgradeLevel
     : (typeof TankPowerSelectScene !== 'undefined' ? (TankPowerSelectScene.chosenUpgradeLevel || 0) : 0);
   for (var i = 0; i < upgradeLevel; i++) {
     tank.upgrade();
   }
-  this._eventManager.fireEvent({'name': PlayerTankFactory.Event.PLAYER_TANK_CREATED, 'tank': tank});
+  this._eventManager.fireEvent({
+    'name': PlayerTankFactory.Event.PLAYER_TANK_CREATED,
+    'tank': tank,
+    'controllerType': this._controllerType
+  });
   return tank;
 };
 
