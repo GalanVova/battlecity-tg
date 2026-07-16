@@ -4,18 +4,15 @@ function PlayerTankFactory(eventManager) {
   this._appearPosition = new Point(0, 0);
   this._active = true;
   this._controllerType = 'player1';
+  this._tank = null;
 }
 
 PlayerTankFactory.Event = {};
 PlayerTankFactory.Event.PLAYER_TANK_CREATED = 'PlayerTankFactory.Event.PLAYER_TANK_CREATED';
 
 PlayerTankFactory.prototype.notify = function (event) {
-  if (!this._active) {
-    return;
-  }
-  if (this._tankExplosionDestroyed(event)) {
-    this.create();
-  }
+  if (!this._active) return;
+  if (this._tankExplosionDestroyed(event)) this.create();
 };
 
 PlayerTankFactory.prototype.setAppearPosition = function (position) {
@@ -37,13 +34,13 @@ PlayerTankFactory.prototype.create = function () {
   var upgradeLevel = (this._upgradeLevel !== undefined)
     ? this._upgradeLevel
     : (typeof TankPowerSelectScene !== 'undefined' ? (TankPowerSelectScene.chosenUpgradeLevel || 0) : 0);
-  for (var i = 0; i < upgradeLevel; i++) {
-    tank.upgrade();
-  }
+  for (var i = 0; i < upgradeLevel; i++) tank.upgrade();
+
+  this._tank = tank;
   this._eventManager.fireEvent({
-    'name': PlayerTankFactory.Event.PLAYER_TANK_CREATED,
-    'tank': tank,
-    'controllerType': this._controllerType
+    name: PlayerTankFactory.Event.PLAYER_TANK_CREATED,
+    tank: tank,
+    controllerType: this._controllerType
   });
   return tank;
 };
@@ -53,12 +50,6 @@ PlayerTankFactory.prototype.setActive = function (active) {
 };
 
 PlayerTankFactory.prototype._tankExplosionDestroyed = function (event) {
-  if (event.name != TankExplosion.Event.DESTROYED) {
-    return false;
-  }
-  var tank = event.explosion.getTank();
-  if (!tank.isPlayer()) {
-    return false;
-  }
-  return true;
+  if (event.name !== TankExplosion.Event.DESTROYED || !this._tank) return false;
+  return event.explosion.getTank() === this._tank;
 };
