@@ -53,7 +53,7 @@ function broadcast(room, msg) {
   sendTo(room.p2, msg);
 }
 
-const wss = new WebSocketServer({ server: httpServer });
+const wss = new WebSocketServer({ server: httpServer, maxPayload: 2 * 1024 * 1024 });
 
 wss.on('connection', (ws) => {
   ws._room = null;
@@ -128,6 +128,13 @@ wss.on('connection', (ws) => {
           key: msg.key,
           pressed: !!msg.pressed
         });
+        break;
+      }
+
+      case 'FRAME': {
+        const room = rooms[ws._room];
+        if (!room || ws._role !== 'p1' || !room.p2) return;
+        sendTo(room.p2, { type: 'FRAME', data: msg.data });
         break;
       }
 
