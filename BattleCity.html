@@ -138,6 +138,8 @@
       var ws = null;
       var touchControls = null;
       var multiplayerSync = null;
+      var networkRole = null;
+      var frameTick = 0;
 
       var serverUrl = (function () {
         var params = new URLSearchParams(window.location.search);
@@ -189,9 +191,21 @@
       };
 
       window.startNetworkGame = function (role, roomWs) {
+        networkRole = role;
         TankPowerSelectScene.twoPlayers = true;
-        sceneManager.toGameScene();
-        multiplayerSync = new MultiplayerSync(roomWs, role, eventManager);
+
+        if (role === 'p1') {
+          // Только первый игрок запускает физику, врагов, смерти и переходы уровней.
+          sceneManager.toGameScene();
+        } else {
+          // Второй игрок не запускает отдельную игру: он смотрит кадры хозяина.
+          sceneManager._eventManager.removeAllSubscribers();
+          sceneManager._scene = null;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        }
+
+        multiplayerSync = new MultiplayerSync(roomWs, role, eventManager, ctx);
         window._bcMultiplayerSync = multiplayerSync;
 
         if (isMobile) {
@@ -209,9 +223,18 @@
 
       setInterval(function () {
         keyboard.fireEvents();
-        if (sceneManager._scene) {
+
+        if (networkRole !== 'p2' && sceneManager._scene) {
           sceneManager.update();
           sceneManager.draw(ctx);
+        }
+
+        // Отправляем P2 готовый кадр примерно 10 раз в секунду.
+        if (networkRole === 'p1' && multiplayerSync) {
+          frameTick++;
+          if (frameTick % 5 === 0) {
+            multiplayerSync.sendFrame(document.getElementById(CANVAS_ID));
+          }
         }
       }, 1000 / FPS);
 
