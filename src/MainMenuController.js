@@ -12,14 +12,21 @@ MainMenuController.prototype.notify = function (event) {
 };
 
 MainMenuController.prototype.keyPressed = function (key) {
-  if (!this._active) {
-    return;
-  }
-  
-  if (key == Keyboard.Key.SELECT) {
+  if (!this._active) return;
+
+  // На компьютере меню теперь можно листать стрелками,
+  // при этом старый CTRL/SELECT остаётся рабочим.
+  if (key == Keyboard.Key.SELECT || key == Keyboard.Key.DOWN || key == Keyboard.Key.RIGHT) {
     this._menu.nextItem();
   }
-  else if (key == Keyboard.Key.START) {
+  else if (key == Keyboard.Key.UP || key == Keyboard.Key.LEFT) {
+    // В старом меню есть только nextItem(), поэтому идём по кругу назад
+    // через несколько шагов. Для 4 пунктов достаточно 3 вызовов.
+    this._menu.nextItem();
+    this._menu.nextItem();
+    this._menu.nextItem();
+  }
+  else if (key == Keyboard.Key.START || key == Keyboard.Key.SPACE) {
     this._menu.executeCurrentItem();
   }
 };
