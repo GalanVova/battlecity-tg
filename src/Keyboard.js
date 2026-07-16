@@ -19,9 +19,18 @@ Keyboard.Event = {};
 Keyboard.Event.KEY_PRESSED = 'Keyboard.Event.KEY_PRESSED';
 Keyboard.Event.KEY_RELEASED = 'Keyboard.Event.KEY_RELEASED';
 
+Keyboard.prototype._isTypingTarget = function (target) {
+  if (!target) return false;
+  var tag = (target.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+};
+
 Keyboard.prototype._listen = function () {
   var self = this;
   $(document).keydown(function (event) {
+    // Не перехватываем клавиши, когда пользователь вводит код комнаты.
+    if (self._isTypingTarget(event.target)) return;
+
     if (!self._keys[event.which]) {
       self._keys[event.which] = true;
       self._events.push({name: Keyboard.Event.KEY_PRESSED, key: event.which});
@@ -29,6 +38,8 @@ Keyboard.prototype._listen = function () {
     event.preventDefault();
   });
   $(document).keyup(function (event) {
+    if (self._isTypingTarget(event.target)) return;
+
     if (self._keys[event.which]) {
       self._keys[event.which] = false;
       self._events.push({name: Keyboard.Event.KEY_RELEASED, key: event.which});
