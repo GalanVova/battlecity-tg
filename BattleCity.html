@@ -1,279 +1,250 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-  "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Battle City</title>
-  
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <link rel="stylesheet" type="text/css" href="css/BattleCity.css" />
-  
-  <script type="text/javascript" src="lib/jquery-1.7.2.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/BattleCity.css">
 
-  <script type="text/javascript" src="src/Utils.js"></script>
-  <script type="text/javascript" src="src/Point.js"></script>
-  <script type="text/javascript" src="src/Rect.js"></script>
-  <script type="text/javascript" src="src/Sprite.js"></script>
-  <script type="text/javascript" src="src/Tank.js"></script>
-  <script type="text/javascript" src="src/Wall.js"></script>
-  <script type="text/javascript" src="src/SpriteContainer.js"></script>
-  <script type="text/javascript" src="src/CollisionDetector.js"></script>
-  <script type="text/javascript" src="src/EventManager.js"></script>
-  <script type="text/javascript" src="src/SpriteController.js"></script>
-  <script type="text/javascript" src="src/TankController.js"></script>
-  <script type="text/javascript" src="src/Player2TankController.js"></script>
-  <script type="text/javascript" src="src/Keyboard.js"></script>
-  <script type="text/javascript" src="src/BulletFactory.js"></script>
-  <script type="text/javascript" src="src/Bullet.js"></script>
-  <script type="text/javascript" src="src/Painter.js"></script>
-  <script type="text/javascript" src="src/Updater.js"></script>
-  <script type="text/javascript" src="src/BulletExplosionFactory.js"></script>
-  <script type="text/javascript" src="src/Explosion.js"></script>
-  <script type="text/javascript" src="src/BulletExplosion.js"></script>
-  <script type="text/javascript" src="src/BrickWall.js"></script>
-  <script type="text/javascript" src="src/SteelWall.js"></script>
-  <script type="text/javascript" src="src/Cursor.js"></script>
-  <script type="text/javascript" src="src/BlinkTimer.js"></script>
-  <script type="text/javascript" src="src/CursorController.js"></script>
-  <script type="text/javascript" src="src/Builder.js"></script>
-  <script type="text/javascript" src="src/StructureManager.js"></script>
-  <script type="text/javascript" src="src/BrickWallFactory.js"></script>
-  <script type="text/javascript" src="src/SteelWallFactory.js"></script>
-  <script type="text/javascript" src="src/Globals.js"></script>
-  <script type="text/javascript" src="src/SpriteSerializer.js"></script>
-  <script type="text/javascript" src="src/Base.js"></script>
-  <script type="text/javascript" src="src/TankStateAppearing.js"></script>
-  <script type="text/javascript" src="src/TankStateNormal.js"></script>
-  <script type="text/javascript" src="src/TankStateInvincible.js"></script>
-  <script type="text/javascript" src="src/AITankController.js"></script>
-  <script type="text/javascript" src="src/Random.js"></script>
-  <script type="text/javascript" src="src/AITankControllerFactory.js"></script>
-  <script type="text/javascript" src="src/AITankControllerContainer.js"></script>
-  <script type="text/javascript" src="src/EnemyFactory.js"></script>
-  <script type="text/javascript" src="src/Animation.js"></script>
-  <script type="text/javascript" src="src/TankExplosionFactory.js"></script>
-  <script type="text/javascript" src="src/TankExplosion.js"></script>
-  <script type="text/javascript" src="src/PointsFactory.js"></script>
-  <script type="text/javascript" src="src/Points.js"></script>
-  <script type="text/javascript" src="src/PlayerTankFactory.js"></script>
-  <script type="text/javascript" src="src/PlayerTankControllerFactory.js"></script>
-  <script type="text/javascript" src="src/PowerUpFactory.js"></script>
-  <script type="text/javascript" src="src/PowerUp.js"></script>
-  <script type="text/javascript" src="src/PowerUpHandler.js"></script>
-  <script type="text/javascript" src="src/FreezeTimer.js"></script>
-  <script type="text/javascript" src="src/BaseWallBuilder.js"></script>
-  <script type="text/javascript" src="src/ShovelHandler.js"></script>
-  <script type="text/javascript" src="src/Pause.js"></script>
-  <script type="text/javascript" src="src/PauseListener.js"></script>
-  <script type="text/javascript" src="src/BaseExplosionFactory.js"></script>
-  <script type="text/javascript" src="src/BaseExplosion.js"></script>
-  <script type="text/javascript" src="src/TankColor.js"></script>
-  <script type="text/javascript" src="src/TankPowerSelectScene.js"></script>
-  <script type="text/javascript" src="src/SceneManager.js"></script>
-  <script type="text/javascript" src="src/MainMenuScene.js"></script>
-  <script type="text/javascript" src="src/MainMenuItem.js"></script>
-  <script type="text/javascript" src="src/OnePlayerMenuItem.js"></script>
-  <script type="text/javascript" src="src/TwoPlayersMenuItem.js"></script>
-  <script type="text/javascript" src="src/MultiplayerMenuItem.js"></script>
-  <script type="text/javascript" src="src/ConstructionMenuItem.js"></script>
-  <script type="text/javascript" src="src/MainMenu.js"></script>
-  <script type="text/javascript" src="src/MainMenuController.js"></script>
-  <script type="text/javascript" src="src/MainMenuView.js"></script>
-  <script type="text/javascript" src="src/MainMenuCursor.js"></script>
-  <script type="text/javascript" src="src/MainMenuCursorView.js"></script>
-  <script type="text/javascript" src="src/Gamefield.js"></script>
-  <script type="text/javascript" src="src/Level.js"></script>
-  <script type="text/javascript" src="src/EnemyFactoryView.js"></script>
-  <script type="text/javascript" src="src/LivesView.js"></script>
-  <script type="text/javascript" src="src/LivesView2.js"></script>
-  <script type="text/javascript" src="src/MainMenuView.js"></script>
-  <script type="text/javascript" src="src/Curtain.js"></script>
-  <script type="text/javascript" src="src/Script.js"></script>
-  <script type="text/javascript" src="src/Delay.js"></script>
-  <script type="text/javascript" src="src/GameScene.js"></script>
-  <script type="text/javascript" src="src/StageMessage.js"></script>
-  <script type="text/javascript" src="src/Stages.js"></script>
-  <script type="text/javascript" src="src/MoveFn.js"></script>
-  <script type="text/javascript" src="src/GameOverMessage.js"></script>
-  <script type="text/javascript" src="src/StageStatisticsScene.js"></script>
-  <script type="text/javascript" src="src/GameOverScene.js"></script>
-  <script type="text/javascript" src="src/Player.js"></script>
-  <script type="text/javascript" src="src/StageStatisticsPoints.js"></script>
-  <script type="text/javascript" src="src/Trees.js"></script>
-  <script type="text/javascript" src="src/Water.js"></script>
-  <script type="text/javascript" src="src/LoadingScene.js"></script>
-  
+  <script src="lib/jquery-1.7.2.js"></script>
+  <script src="src/Utils.js"></script>
+  <script src="src/Point.js"></script>
+  <script src="src/Rect.js"></script>
+  <script src="src/Sprite.js"></script>
+  <script src="src/Tank.js"></script>
+  <script src="src/Wall.js"></script>
+  <script src="src/SpriteContainer.js"></script>
+  <script src="src/CollisionDetector.js"></script>
+  <script src="src/EventManager.js"></script>
+  <script src="src/SpriteController.js"></script>
+  <script src="src/TankController.js"></script>
+  <script src="src/Player2TankController.js"></script>
+  <script src="src/Keyboard.js"></script>
+  <script src="src/BulletFactory.js"></script>
+  <script src="src/Bullet.js"></script>
+  <script src="src/Painter.js"></script>
+  <script src="src/Updater.js"></script>
+  <script src="src/BulletExplosionFactory.js"></script>
+  <script src="src/Explosion.js"></script>
+  <script src="src/BulletExplosion.js"></script>
+  <script src="src/BrickWall.js"></script>
+  <script src="src/SteelWall.js"></script>
+  <script src="src/Cursor.js"></script>
+  <script src="src/BlinkTimer.js"></script>
+  <script src="src/CursorController.js"></script>
+  <script src="src/Builder.js"></script>
+  <script src="src/StructureManager.js"></script>
+  <script src="src/BrickWallFactory.js"></script>
+  <script src="src/SteelWallFactory.js"></script>
+  <script src="src/Globals.js"></script>
+  <script src="src/SpriteSerializer.js"></script>
+  <script src="src/Base.js"></script>
+  <script src="src/TankStateAppearing.js"></script>
+  <script src="src/TankStateNormal.js"></script>
+  <script src="src/TankStateInvincible.js"></script>
+  <script src="src/AITankController.js"></script>
+  <script src="src/Random.js"></script>
+  <script src="src/AITankControllerFactory.js"></script>
+  <script src="src/AITankControllerContainer.js"></script>
+  <script src="src/EnemyFactory.js"></script>
+  <script src="src/Animation.js"></script>
+  <script src="src/TankExplosionFactory.js"></script>
+  <script src="src/TankExplosion.js"></script>
+  <script src="src/PointsFactory.js"></script>
+  <script src="src/Points.js"></script>
+  <script src="src/PlayerTankFactory.js"></script>
+  <script src="src/PlayerTankControllerFactory.js"></script>
+  <script src="src/PowerUpFactory.js"></script>
+  <script src="src/PowerUp.js"></script>
+  <script src="src/PowerUpHandler.js"></script>
+  <script src="src/FreezeTimer.js"></script>
+  <script src="src/BaseWallBuilder.js"></script>
+  <script src="src/ShovelHandler.js"></script>
+  <script src="src/Pause.js"></script>
+  <script src="src/PauseListener.js"></script>
+  <script src="src/BaseExplosionFactory.js"></script>
+  <script src="src/BaseExplosion.js"></script>
+  <script src="src/TankColor.js"></script>
+  <script src="src/TankPowerSelectScene.js"></script>
+  <script src="src/SceneManager.js"></script>
+  <script src="src/MainMenuScene.js"></script>
+  <script src="src/MainMenuItem.js"></script>
+  <script src="src/OnePlayerMenuItem.js"></script>
+  <script src="src/TwoPlayersMenuItem.js"></script>
+  <script src="src/MultiplayerMenuItem.js"></script>
+  <script src="src/ConstructionMenuItem.js"></script>
+  <script src="src/MainMenu.js"></script>
+  <script src="src/MainMenuController.js"></script>
+  <script src="src/MainMenuView.js"></script>
+  <script src="src/MainMenuCursor.js"></script>
+  <script src="src/MainMenuCursorView.js"></script>
+  <script src="src/Gamefield.js"></script>
+  <script src="src/Level.js"></script>
+  <script src="src/EnemyFactoryView.js"></script>
+  <script src="src/LivesView.js"></script>
+  <script src="src/LivesView2.js"></script>
+  <script src="src/Curtain.js"></script>
+  <script src="src/Script.js"></script>
+  <script src="src/Delay.js"></script>
+  <script src="src/GameScene.js"></script>
+  <script src="src/StageMessage.js"></script>
+  <script src="src/Stages.js"></script>
+  <script src="src/MoveFn.js"></script>
+  <script src="src/GameOverMessage.js"></script>
+  <script src="src/StageStatisticsScene.js"></script>
+  <script src="src/GameOverScene.js"></script>
+  <script src="src/Player.js"></script>
+  <script src="src/StageStatisticsPoints.js"></script>
+  <script src="src/Trees.js"></script>
+  <script src="src/Water.js"></script>
+  <script src="src/LoadingScene.js"></script>
+  <script src="src/TouchControls.js"></script>
+  <script src="src/MultiplayerSync.js"></script>
+  <script src="src/MultiplayerLobby.js"></script>
+  <script src="lib/Stats.js"></script>
+  <script src="src/FPSCounter.js"></script>
+  <script src="src/ImageManager.js"></script>
+  <script src="src/Construction.js"></script>
+  <script src="src/SpriteSerializerController.js"></script>
+  <script src="src/SoundManager.js"></script>
 
-  <script type="text/javascript" src="src/TouchControls.js"></script>
-  <script type="text/javascript" src="src/MultiplayerSync.js"></script>
-  <script type="text/javascript" src="src/MultiplayerLobby.js"></script>
+  <style>
+    html, body { margin:0; background:#000; overflow:hidden; width:100%; height:100%; }
+    #main { width:100%; height:100%; overflow:hidden; }
+    canvas { touch-action:none; }
+  </style>
 
-  <script type="text/javascript" src="lib/Stats.js"></script>
-  <script type="text/javascript" src="src/FPSCounter.js"></script>
-  
-  <script type="text/javascript" src="src/ImageManager.js"></script>
-  <script type="text/javascript" src="src/Construction.js"></script>
-  <script type="text/javascript" src="src/SpriteSerializerController.js"></script>
-  <script type="text/javascript" src="src/SpriteSerializer.js"></script>
-  <script type="text/javascript" src="src/SoundManager.js"></script>
-
-  <script type="text/javascript">
+  <script>
     $(function () {
       var FPS = 50;
       var CANVAS_ID = 'canvas';
-
-      // ── Telegram WebApp ──────────────────────────────────
       var tg = window.Telegram && window.Telegram.WebApp;
       if (tg) {
         tg.ready();
         tg.expand();
-        tg.disableVerticalSwipes && tg.disableVerticalSwipes();
+        if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       }
 
-      var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || (tg != null);
+      var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || !!tg;
+      window._bcAutoMultiplayer = isMobile;
 
-      // ── Canvas ───────────────────────────────────────────
       var ctx = createCanvasContext();
-      ctx.font = "16px prstart";
+      ctx.font = '16px prstart';
 
       var eventManager = new EventManager();
-      var keyboard     = new Keyboard(eventManager);
+      var keyboard = new Keyboard(eventManager);
       var sceneManager = new SceneManager(eventManager);
-
-      // ── Определяем SERVER_URL ────────────────────────────
-      // При открытии через Telegram Mini App — берём из URL параметра
-      // или из window.location (если игра на том же сервере)
-      var serverUrl = (function() {
-        var params = new URLSearchParams(window.location.search);
-        if (params.get('server')) return params.get('server');
-        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return proto + '//' + location.host;
-      })();
-
-      // ── WebSocket подключение ────────────────────────────
       var ws = null;
       var touchControls = null;
+      var multiplayerSync = null;
 
-      // Подключаемся к серверу в фоне — но НЕ меняем сцену
-      // Меню остаётся оригинальным: 1 PLAYER / 2 PLAYERS / MULTIPLAYER / CONSTRUCTION
+      var serverUrl = (function () {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('server')) return params.get('server');
+        return 'wss://battlecity-tg.onrender.com';
+      })();
+
+      function installTouchControls(options) {
+        if (!isMobile) return;
+        if (touchControls) touchControls.destroy();
+        touchControls = options || new TouchControls(document.getElementById(CANVAS_ID), eventManager);
+        touchControls.show();
+        window._bcTouchControls = touchControls;
+      }
+
       function connectToServer(callback) {
+        if (ws && (ws.readyState === 0 || ws.readyState === 1)) {
+          if (ws.readyState === 1 && callback) callback(ws);
+          return;
+        }
         try {
           ws = new WebSocket(serverUrl);
-        } catch(e) {
+        } catch (e) {
           if (callback) callback(null);
           return;
         }
-        ws.onopen = function() {
+        ws.onopen = function () {
           window._bcWs = ws;
           window._bcEventManager = eventManager;
           window._bcCanvas = document.getElementById(CANVAS_ID);
           window._bcIsMobile = isMobile;
           if (callback) callback(ws);
         };
-        ws.onerror = function() {
+        ws.onerror = function () {
           if (callback) callback(null);
         };
       }
 
-      // Глобальная функция для открытия мультиплеер-лобби
-      // Вызывается из MultiplayerMenuItem.execute()
-      window.openMultiplayerLobby = function() {
-        if (window._bcWs && window._bcWs.readyState === 1) {
-          // Уже подключены
-          sceneManager._eventManager.removeAllSubscribers();
-          sceneManager._scene = new MultiplayerLobby(sceneManager, window._bcWs);
-        } else {
-          // Подключаемся и открываем лобби
-          connectToServer(function(ws) {
-            if (!ws) {
-              alert('Не удалось подключиться к серверу.\nПроверь что server.js запущен.');
-              return;
-            }
-            sceneManager._eventManager.removeAllSubscribers();
-            sceneManager._scene = new MultiplayerLobby(sceneManager, ws);
-          });
+      window.openMultiplayerLobby = function () {
+        function open(readyWs) {
+          if (!readyWs) {
+            alert('Не удалось подключиться к серверу комнат. Попробуй ещё раз через минуту.');
+            return;
+          }
+          sceneManager.toMultiplayerLobby(readyWs);
+        }
+        if (window._bcWs && window._bcWs.readyState === 1) open(window._bcWs);
+        else connectToServer(open);
+      };
+
+      window.startNetworkGame = function (role, roomWs) {
+        TankPowerSelectScene.twoPlayers = true;
+        sceneManager.toGameScene();
+        multiplayerSync = new MultiplayerSync(roomWs, role, eventManager);
+        window._bcMultiplayerSync = multiplayerSync;
+
+        if (isMobile) {
+          installTouchControls(MultiplayerSync.createTouchControls(
+            document.getElementById(CANVAS_ID), eventManager, roomWs, role
+          ));
         }
       };
 
-      // Запускаем игру — показываем обычное меню
       sceneManager.toLoadingScene();
-
-      // Сенсорное управление для смартфона и Telegram Mini App
-      if (isMobile) {
-        touchControls = new TouchControls(document.getElementById(CANVAS_ID), eventManager);
-        touchControls.show();
-      }
-
-      // Подключаемся к серверу в фоне (чтобы мультиплеер открылся быстрее)
-      connectToServer(function(ws) {
-        // Просто сохраняем соединение, меню не меняем
-        console.log(ws ? 'Сервер доступен' : 'Сервер недоступен — только одиночная игра');
+      installTouchControls();
+      connectToServer(function (readyWs) {
+        console.log(readyWs ? 'Room server connected' : 'Room server unavailable');
       });
-      setInterval(gameLoop, 1000 / FPS);
 
-      function gameLoop() {
+      setInterval(function () {
         keyboard.fireEvents();
         if (sceneManager._scene) {
           sceneManager.update();
           sceneManager.draw(ctx);
         }
-      }
+      }, 1000 / FPS);
 
       function createCanvasContext() {
-        var w = Math.min(window.innerWidth, Globals.CANVAS_WIDTH  * 2);
-        var h = Math.min(window.innerHeight, Globals.CANVAS_HEIGHT * 2);
-        // На телефоне масштабируем под экран
+        var w = Globals.CANVAS_WIDTH;
+        var h = Globals.CANVAS_HEIGHT;
         if (isMobile) {
-          var controlsHeight = Math.min(210, Math.max(155, Math.floor(window.innerHeight * 0.28)));
-          var availableHeight = Math.max(260, window.innerHeight - controlsHeight);
+          var controlsHeight = Math.min(220, Math.max(165, Math.floor(window.innerHeight * 0.30)));
+          var availableHeight = Math.max(250, window.innerHeight - controlsHeight);
           var scale = Math.min(window.innerWidth / Globals.CANVAS_WIDTH,
                                availableHeight / Globals.CANVAS_HEIGHT);
-          w = Math.floor(Globals.CANVAS_WIDTH  * scale);
+          w = Math.floor(Globals.CANVAS_WIDTH * scale);
           h = Math.floor(Globals.CANVAS_HEIGHT * scale);
-        } else {
-          w = Globals.CANVAS_WIDTH;
-          h = Globals.CANVAS_HEIGHT;
         }
         var el = $('<canvas id="' + CANVAS_ID + '" width="' + Globals.CANVAS_WIDTH +
                    '" height="' + Globals.CANVAS_HEIGHT + '"></canvas>');
-        el.css({ width: w + 'px', height: h + 'px',
-                 'image-rendering': 'pixelated', display: 'block', margin: '0 auto' });
+        el.css({ width:w+'px', height:h+'px', 'image-rendering':'pixelated', display:'block', margin:'0 auto' });
         el.prependTo('#main');
         return document.getElementById(CANVAS_ID).getContext('2d');
       }
 
-      // Убираем правую панель на мобильных
-      if (isMobile || tg) {
-        $('#help').hide();
-        $('html, body').css({ background: '#000', margin: 0, width: '100%', height: '100%', overflow: 'hidden', 'touch-action': 'none' });
-        $('#main').css({ width: '100%', height: '100%', overflow: 'hidden' });
-      }
+      if (isMobile) $('#help').hide();
     });
   </script>
-
 </head>
-
 <body>
   <div id="main">
     <div id="help">
       <p>CONTROLS:</p>
       <table>
-        <tr>
-          <td><img src="images/Nintendo-Dpad-Neutral.png" alt="" /></td>
-          <td>ARROWS</td>
-        </tr>
-        <tr>
-          <td><img src="images/Nintendo-Button-A.png" alt="" />,<img src="images/Nintendo-Button-B.png" alt="" /></td>
-          <td>SPACE</td>
-        </tr>
-        <tr>
-          <td><img src="images/Nintendo-Button-Start.png" alt="" /></td>
-          <td>ENTER</td>
-        </tr>
-        <tr>
-          <td><img src="images/Nintendo-Button-Select.png" alt="" /></td>
-          <td>CTRL</td>
-        </tr>
+        <tr><td>PLAYER 1</td><td>ARROWS + SPACE</td></tr>
+        <tr><td>PLAYER 2</td><td>WASD + E</td></tr>
+        <tr><td>MENU</td><td>ARROWS + ENTER</td></tr>
       </table>
     </div>
   </div>
