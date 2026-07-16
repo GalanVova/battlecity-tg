@@ -40,9 +40,7 @@ const httpServer = http.createServer((req, res) => {
 const rooms = {};
 
 function makeCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  const code = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
   return rooms[code] ? makeCode() : code;
 }
 
@@ -84,7 +82,7 @@ wss.on('connection', (ws) => {
       }
 
       case 'JOIN_ROOM': {
-        const code = String(msg.code || '').toUpperCase().trim();
+        const code = String(msg.code || '').replace(/\D/g, '').slice(0, 4);
         const room = rooms[code];
         if (!room) return sendTo(ws, { type: 'ERROR', text: 'Комната не найдена' });
         if (room.p2) return sendTo(ws, { type: 'ERROR', text: 'Комната уже занята' });
@@ -124,8 +122,6 @@ wss.on('connection', (ws) => {
       case 'INPUT': {
         const room = rooms[ws._room];
         if (!room) return;
-        // Отправляем обоим. P1 игнорирует собственное эхо,
-        // P2 получает эхо своей команды и применяет её как WASD+E.
         broadcast(room, {
           type: 'INPUT',
           role: ws._role,
