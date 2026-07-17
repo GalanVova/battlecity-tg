@@ -59,9 +59,17 @@ wss.on('connection', (ws) => {
   ws._room = null;
   ws._role = null;
 
-  ws.on('message', (raw) => {
+  ws.on('message', (raw, isBinary) => {
+    if (isBinary) {
+      const room = rooms[ws._room];
+      if (!room || ws._role !== 'p1' || !room.p2 || room.p2.readyState !== 1) return;
+      // Передаём кадр как бинарные данные без JSON/base64 — это заметно быстрее и меньше.
+      if (room.p2.bufferedAmount < 300000) room.p2.send(raw, { binary: true });
+      return;
+    }
+
     let msg;
-    try { msg = JSON.parse(raw); } catch (e) { return; }
+    try { msg = JSON.parse(raw.toString()); } catch (e) { return; }
 
     switch (msg.type) {
       case 'CREATE_ROOM': {
@@ -128,13 +136,6 @@ wss.on('connection', (ws) => {
           key: msg.key,
           pressed: !!msg.pressed
         });
-        break;
-      }
-
-      case 'FRAME': {
-        const room = rooms[ws._room];
-        if (!room || ws._role !== 'p1' || !room.p2) return;
-        sendTo(room.p2, { type: 'FRAME', data: msg.data });
         break;
       }
 
