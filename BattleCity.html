@@ -227,10 +227,10 @@
           sceneManager.draw(ctx);
         }
 
-        // Бинарные WebP-кадры примерно 16–17 раз в секунду.
+        // Редкий запасной канал до установки WebRTC. После соединения кодирование выключается.
         if (networkRole === 'p1' && multiplayerSync) {
           frameTick++;
-          if (frameTick % 3 === 0) {
+          if (frameTick % 10 === 0) {
             multiplayerSync.sendFrame(document.getElementById(CANVAS_ID));
           }
         }
