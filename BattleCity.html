@@ -195,10 +195,8 @@
         TankPowerSelectScene.twoPlayers = true;
 
         if (role === 'p1') {
-          // Только первый игрок запускает физику, врагов, смерти и переходы уровней.
           sceneManager.toGameScene();
         } else {
-          // Второй игрок не запускает отдельную игру: он смотрит кадры хозяина.
           sceneManager._eventManager.removeAllSubscribers();
           sceneManager._scene = null;
           ctx.fillStyle = '#000';
@@ -229,10 +227,10 @@
           sceneManager.draw(ctx);
         }
 
-        // Отправляем P2 готовый кадр примерно 10 раз в секунду.
+        // Бинарные WebP-кадры примерно 16–17 раз в секунду.
         if (networkRole === 'p1' && multiplayerSync) {
           frameTick++;
-          if (frameTick % 5 === 0) {
+          if (frameTick % 3 === 0) {
             multiplayerSync.sendFrame(document.getElementById(CANVAS_ID));
           }
         }
