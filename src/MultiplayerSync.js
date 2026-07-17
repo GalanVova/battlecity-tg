@@ -1,5 +1,5 @@
 // MultiplayerSync — P1 является единственным хозяином игровой логики.
-// P2 отправляет только управление и получает сжатые бинарные кадры с экрана P1.
+// Основной видеоканал: WebRTC canvas stream. Бинарные кадры остаются fallback.
 function MultiplayerSync(ws, role, eventManager, canvasContext) {
   this._ws = ws;
   this._role = role;
@@ -8,13 +8,17 @@ function MultiplayerSync(ws, role, eventManager, canvasContext) {
   this._encoding = false;
   this._drawing = false;
   this._queuedFrame = null;
+  this._peer = null;
+  this._video = null;
+  this._videoLoop = null;
+  this._rtcConnected = false;
 
   ws.binaryType = 'arraybuffer';
 
   var self = this;
   ws.onmessage = function (e) {
     if (typeof e.data !== 'string') {
-      self._onBinaryFrame(e.data);
+      if (!self._rtcConnected) self._onBinaryFrame(e.data);
       return;
     }
 
@@ -22,30 +26,148 @@ function MultiplayerSync(ws, role, eventManager, canvasContext) {
     try { msg = JSON.parse(e.data); } catch (err) { return; }
     self._onMessage(msg);
   };
+
+  this._startWebRTC();
 }
+
+MultiplayerSync.prototype._startWebRTC = function () {
+  if (!window.RTCPeerConnection) return;
+
+  var self = this;
+  var peer;
+  try {
+    peer = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+  } catch (e) {
+    return;
+  }
+
+  this._peer = peer;
+
+  peer.onicecandidate = function (event) {
+    if (!event.candidate || self._ws.readyState !== 1) return;
+    self._ws.send(JSON.stringify({
+      type: 'SIGNAL',
+      data: { kind: 'candidate', candidate: event.candidate }
+    }));
+  };
+
+  peer.onconnectionstatechange = function () {
+    self._rtcConnected = peer.connectionState === 'connected';
+  };
+
+  if (this._role === 'p1') {
+    var canvas = this._ctx && this._ctx.canvas;
+    if (!canvas || !canvas.captureStream) return;
+
+    try {
+      var stream = canvas.captureStream(30);
+      var tracks = stream.getVideoTracks();
+      for (var i = 0; i < tracks.length; i++) peer.addTrack(tracks[i], stream);
+
+      peer.createOffer({ offerToReceiveVideo: false }).then(function (offer) {
+        return peer.setLocalDescription(offer);
+      }).then(function () {
+        if (self._ws.readyState === 1) {
+          self._ws.send(JSON.stringify({
+            type: 'SIGNAL',
+            data: { kind: 'description', description: peer.localDescription }
+          }));
+        }
+      }).catch(function () {});
+    } catch (e) {}
+    return;
+  }
+
+  peer.ontrack = function (event) {
+    var stream = event.streams && event.streams[0];
+    if (!stream) return;
+
+    var video = document.createElement('video');
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = stream;
+    video.style.display = 'none';
+    document.body.appendChild(video);
+    self._video = video;
+
+    var start = function () {
+      self._rtcConnected = true;
+      self._drawVideoLoop();
+    };
+    var playPromise = video.play();
+    if (playPromise && playPromise.then) playPromise.then(start).catch(function () {});
+    else start();
+  };
+};
+
+MultiplayerSync.prototype._handleSignal = function (data) {
+  if (!this._peer || !data) return;
+  var self = this;
+
+  if (data.kind === 'candidate' && data.candidate) {
+    this._peer.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(function () {});
+    return;
+  }
+
+  if (data.kind !== 'description' || !data.description) return;
+
+  this._peer.setRemoteDescription(new RTCSessionDescription(data.description)).then(function () {
+    if (self._role !== 'p2' || data.description.type !== 'offer') return null;
+    return self._peer.createAnswer().then(function (answer) {
+      return self._peer.setLocalDescription(answer);
+    }).then(function () {
+      if (self._ws.readyState === 1) {
+        self._ws.send(JSON.stringify({
+          type: 'SIGNAL',
+          data: { kind: 'description', description: self._peer.localDescription }
+        }));
+      }
+    });
+  }).catch(function () {});
+};
+
+MultiplayerSync.prototype._drawVideoLoop = function () {
+  if (this._role !== 'p2' || !this._video || !this._ctx) return;
+  var self = this;
+
+  var draw = function () {
+    if (!self._video || !self._ctx) return;
+    if (self._video.readyState >= 2) {
+      self._ctx.drawImage(
+        self._video,
+        0,
+        0,
+        self._ctx.canvas.width,
+        self._ctx.canvas.height
+      );
+    }
+    self._videoLoop = requestAnimationFrame(draw);
+  };
+
+  if (this._videoLoop) cancelAnimationFrame(this._videoLoop);
+  this._videoLoop = requestAnimationFrame(draw);
+};
 
 MultiplayerSync.prototype._onBinaryFrame = function (data) {
   if (this._role !== 'p2' || !this._ctx || !data) return;
-
-  // Не создаём очередь из устаревших кадров: всегда оставляем только самый свежий.
   if (this._drawing) {
     this._queuedFrame = data;
     return;
   }
-
   this._drawBinaryFrame(data);
 };
 
 MultiplayerSync.prototype._drawBinaryFrame = function (data) {
   var self = this;
   this._drawing = true;
-
   var blob = data instanceof Blob ? data : new Blob([data], { type: 'image/webp' });
 
   if (window.createImageBitmap) {
     createImageBitmap(blob).then(function (bitmap) {
       if (self._ctx) {
-        self._ctx.clearRect(0, 0, self._ctx.canvas.width, self._ctx.canvas.height);
         self._ctx.drawImage(bitmap, 0, 0, self._ctx.canvas.width, self._ctx.canvas.height);
       }
       if (bitmap.close) bitmap.close();
@@ -65,7 +187,6 @@ MultiplayerSync.prototype._drawBlobWithImage = function (blob) {
   var image = new Image();
   image.onload = function () {
     if (self._ctx) {
-      self._ctx.clearRect(0, 0, self._ctx.canvas.width, self._ctx.canvas.height);
       self._ctx.drawImage(image, 0, 0, self._ctx.canvas.width, self._ctx.canvas.height);
     }
     URL.revokeObjectURL(url);
@@ -80,29 +201,32 @@ MultiplayerSync.prototype._drawBlobWithImage = function (blob) {
 
 MultiplayerSync.prototype._finishFrameDraw = function () {
   this._drawing = false;
-  if (this._queuedFrame) {
+  if (this._queuedFrame && !this._rtcConnected) {
     var latest = this._queuedFrame;
     this._queuedFrame = null;
     this._drawBinaryFrame(latest);
+  } else {
+    this._queuedFrame = null;
   }
 };
 
 MultiplayerSync.prototype._onMessage = function (msg) {
   if (msg.type === 'INPUT') {
-    // Только P1 применяет команды к игровой логике.
     if (this._role !== 'p1') return;
 
     var key = msg.role === 'p2'
       ? (MultiplayerSync.P2_KEY_MAP[msg.key] || msg.key)
       : msg.key;
 
-    // Собственные команды P1 уже применены локально.
     if (msg.role === 'p1') return;
 
     this._em.fireEvent({
       name: msg.pressed ? Keyboard.Event.KEY_PRESSED : Keyboard.Event.KEY_RELEASED,
       key: key
     });
+  }
+  else if (msg.type === 'SIGNAL') {
+    this._handleSignal(msg.data);
   }
   else if (msg.type === 'OPPONENT_LEFT') {
     var overlay = document.createElement('div');
@@ -118,34 +242,24 @@ MultiplayerSync.prototype._onMessage = function (msg) {
 };
 
 MultiplayerSync.prototype.sendFrame = function (canvas) {
+  if (this._rtcConnected) return;
   if (this._role !== 'p1' || !canvas || this._ws.readyState !== 1) return;
-  if (this._encoding || this._ws.bufferedAmount > 180000) return;
+  if (this._encoding || this._ws.bufferedAmount > 120000) return;
 
   var self = this;
   this._encoding = true;
-
   var finish = function () { self._encoding = false; };
 
-  // WebP заметно меньше JPEG для пиксельной графики и не блокирует основной цикл.
   if (canvas.toBlob) {
     canvas.toBlob(function (blob) {
-      if (blob && self._ws.readyState === 1 && self._ws.bufferedAmount < 180000) {
+      if (blob && self._ws.readyState === 1 && self._ws.bufferedAmount < 120000) {
         self._ws.send(blob);
       }
       finish();
-    }, 'image/webp', 0.72);
+    }, 'image/webp', 0.45);
     return;
   }
 
-  // Старый fallback для браузеров без toBlob.
-  try {
-    var dataUrl = canvas.toDataURL('image/jpeg', 0.5);
-    var base64 = dataUrl.split(',')[1];
-    var binary = atob(base64);
-    var bytes = new Uint8Array(binary.length);
-    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    this._ws.send(bytes.buffer);
-  } catch (e) {}
   finish();
 };
 
