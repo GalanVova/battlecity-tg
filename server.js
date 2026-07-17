@@ -63,7 +63,6 @@ wss.on('connection', (ws) => {
     if (isBinary) {
       const room = rooms[ws._room];
       if (!room || ws._role !== 'p1' || !room.p2 || room.p2.readyState !== 1) return;
-      // Передаём кадр как бинарные данные без JSON/base64 — это заметно быстрее и меньше.
       if (room.p2.bufferedAmount < 300000) room.p2.send(raw, { binary: true });
       return;
     }
@@ -136,6 +135,14 @@ wss.on('connection', (ws) => {
           key: msg.key,
           pressed: !!msg.pressed
         });
+        break;
+      }
+
+      case 'SIGNAL': {
+        const room = rooms[ws._room];
+        if (!room) return;
+        const other = ws._role === 'p1' ? room.p2 : room.p1;
+        sendTo(other, { type: 'SIGNAL', from: ws._role, data: msg.data });
         break;
       }
 
