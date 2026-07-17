@@ -33,9 +33,17 @@ Player.prototype.notify = function (event) {
     this._score += event.points.getValue();
   }
   else if (event.name == Tank.Event.PLAYER_DESTROYED) {
+    var role = event.tank && event.tank._playerRole ? event.tank._playerRole : 'player1';
+    var belongsToThisPlayer = this._isPlayer2 ? role === 'player2' : role !== 'player2';
+    if (!belongsToThisPlayer) return;
+
     if (this._lives == 0) {
       this._outOfLives = true;
-      this._eventManager.fireEvent({'name': Player.Event.OUT_OF_LIVES});
+      this._eventManager.fireEvent({
+        'name': Player.Event.OUT_OF_LIVES,
+        'player': this,
+        'role': this._isPlayer2 ? 'player2' : 'player1'
+      });
     }
     else {
       this._lives--;
